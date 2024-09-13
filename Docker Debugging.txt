@@ -1,0 +1,152 @@
+----------------------------------------------------Basic Definition---------------------------------------------------------
+
+Docker Image -  A snapshot of complete file system that has eveyrthing required to run an application
+Docker Container  - A Conatiner is an running instance which executes application build on top of docker image.
+
+----------------------------------------------------Create Docker Image---------------------------------------------------------
+#1) create sample python application 
+
+import time
+print("Hello, Docker!")
+time.sleep(5)
+print("Goodbye, Docker!")
+
+#2) Create a Requirements File
+requests
+time
+
+#3) Create a Dockerfile (These steps are also called layers in the docker image)
+
+## Use the official Python image as a base image
+FROM python:3.11-slim
+## Set the working directory in the container
+WORKDIR /app
+## Copy the requirements.txt file into the container
+COPY requirements.txt .
+## Install dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+## Copy the rest of the application code into the container
+COPY . .
+## Expose the port that the FastAPI app will run on
+EXPOSE 8000
+# Define the command to run the FastAPI application
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+Explanation of Dockerfile Layers
+Layer 1: Base Image (FROM python:3.9-slim)
+Layer 2: Working Directory (WORKDIR /app)
+Layer 3: Copy Requirements (COPY requirements.txt ./)
+Layer 4: Install Dependencies (RUN pip install --no-cache-dir -r requirements.txt)
+Layer 5: Copy Application Files (COPY . .)
+Layer 6: Expose Port 8000
+Layer 7: CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+#4) Build Docker Image (say sample) // layer creation based on docker file
+docker build -t sample .
+
+#5) Run Docker Image
+docker run -d -p 8000:8000 sample
+(Host Port : Container Port) 
+
+-------------d---------------------------------------Docker Important Commands---------------------------------------------------------
+Important Docker Commands
+1. Docker Basics
+docker version: Shows the Docker version installed on your system.
+docker info: Provides detailed information about the Docker installation, including the number of containers, images, and the storage driver used.
+docker help: Lists Docker commands and options.
+
+2. Managing Docker Containers
+docker ps: Lists running containers. Add -a to list all containers, including stopped ones.
+docker start <container_id>: Starts a stopped container.
+docker stop <container_id>: Stops a running container.
+docker restart <container_id>: Restarts a container.
+docker rm <container_id>: Removes a container. Use -f to force removal of a running container.
+docker exec -it <container_id> <command>: Runs a command inside a running container (e.g., bash to open a shell in the container).
+docker attach <container_id>: Attaches your terminal to a running container’s stdin, stdout, and stderr.
+
+3. Managing Docker Images
+docker images: Lists all images on your system.
+docker build -t <image_name> .: Builds an image from a Dockerfile in the current directory.
+docker pull <image_name>: Downloads an image from a Docker registry.
+docker rmi <image_id>: Removes an image from your system.
+
+4. Working with Docker Logs
+docker logs <container_id>: Shows the logs of a container. Use -f to follow live log output.
+docker logs --tail <number> <container_id>: Shows the last n lines of logs from a container.
+docker logs --since <timestamp> <container_id>: Shows logs since a specific time (e.g., 1h for the last hour).
+
+5. Modifying or changing docker file via docker  commands only 
+
+Method 1
+Assuming hum "requests" add kr rhe hain  - 
+	echo "requests" >> requirements.txt
+
+Rebuild the Docker image:
+docker build -t myfastapiapp .
+
+Run the container:
+docker run -d -p 8000:8000 myfastapiapp
+
+Method 2: Commit Changes to an Existing Container
+Start a container from your existing image:
+docker run -it myfastapiapp /bin/bash
+
+Install the missing library inside the running container:
+pip install requests
+
+Update the requirements.txt file inside the container:
+pip freeze > requirements.txt
+
+Open a new terminal and find the container ID:
+docker ps
+
+Commit the changes to create a new image:
+docker commit <container_id> myfastapiapp:updated
+
+Run the new image:
+docker run -d -p 8000:8000 myfastapiapp:updated
+
+Summary
+Method 1 is straightforward and ensures your Dockerfile and requirements.txt are always up-to-date. This method is generally preferred for maintaining a clean and reproducible build process.
+Method 2 is useful for quick fixes and testing but can lead to inconsistencies if not properly documented.
+
+
+6. Some additional Commands
+docker history image_name : for getting breakup of image size
+docker run -d -p 8000:8000 image_name :  for parallely run other commands while docker container is running
+docker run -it image_name /bin/bash : to go inside a container of that corresponding image
+docker ps -a : list all containers running or not running
+docker run -d -p8000:8000 --name xyz image_name : name docker container as use requirements
+docker rmi -f $(docker images -q) - Forcefully remove all images
+docker rmi <image_id1> <image_id2> <image_id3> -  remove multiple images at once
+
+modify the requirements.txt file directly within the container and then rebuild the image. Here’s how you can do it:
+
+Start the container with an interactive shell:
+docker run -it --name temp_container your_image_name /bin/bash
+
+Navigate to the working directory:
+cd /app
+
+Check the contents of requirements.txt:
+cat requirements.txt
+
+Edit the requirements.txt file: You can use echo to add or replace lines. For example, to replace a line:
+echo "correct_package==1.0.0" > requirements.txt
+
+Verify the changes:
+cat requirements.txt
+
+Exit the container:
+exit
+
+Commit the changes to create a new image:
+docker commit temp_container new_image_name
+
+Remove the temporary container:
+docker rm temp_container
+
+Run the new image:
+docker run -p 8000:8000 new_image_name
+
+ 

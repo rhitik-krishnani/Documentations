@@ -1,0 +1,23 @@
+If you have a docker image in your local system and you want to execute it on another instance EC/another local 
+then perform the below steps for the same:
+
+Step 1) Save Docker Image as Tarball
+docker save -o your-image-name.tar your-image-name
+
+Step 2)Transfer Tarball to EC2:
+scp -i "your-key.pem" your-image-name.tar ec2-user@your-ec2-public-dns:/home/ec2-user/
+
+Step 3)SSH into EC2:
+ssh -i "your-key.pem" ec2-user@your-ec2-public-dns
+
+Step 4) Load Docker Image:
+sudo docker load -i /home/ec2-user/your-image-name.tar
+
+Step 5)Run Docker Container:
+sudo docker run -d -p 80:80 your-image-name (-d isiliye likha hai taaaqi aur commands daal skte)
+
+Step 6)Verify Container:
+
+sudo docker ps
+
+By following these steps, you’ll be able to deploy a Docker image from your local machine to an EC2 instance.
